@@ -1,21 +1,22 @@
 FROM athosone/winebased:0.0.1
 
-# VOLUME [ "/data/vrising_server" ]
-
 ARG VRISING_APP_ID=1829350
 
-RUN mkdir -p /data/vrising_server
-# Install vrising server
-RUN /usr/bin/steamcmd +@sSteamCmdForcePlatformType windows +force_install_dir "/data/vrising_server" +login anonymous +app_update ${VRISING_APP_ID} validate +quit
+RUN mkdir -p /data
+RUN chown steam /data
 
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
-# Provide the path where the server should store the persistent data: e.g: /data/vrising_server/persistent_data
-ENV PERSISTENT_DATA=""
+USER steam
+
+# Install vrising server
+RUN ./steamcmd.sh +@sSteamCmdForcePlatformType windows +login anonymous +app_update ${VRISING_APP_ID} validate +quit || true
+
+ENV VRISING_APP_ID=${VRISING_APP_ID}
 
 # UDP
-EXPOSE 9897
-EXPOSE 9896
+EXPOSE 9877
+EXPOSE 9876	
 
 CMD [ "/start.sh" ]

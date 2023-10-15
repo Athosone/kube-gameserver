@@ -1,0 +1,43 @@
+# https://developer.valvesoftware.com/wiki/SteamCMD#Linux
+FROM ubuntu:22.04 as winebased
+
+ARG DEBIAN_FRONTEND="noninteractive"
+
+# Install basic tools and dependencies
+RUN apt update -y && \
+  apt-get upgrade -y && \
+  apt-get install -y apt-utils software-properties-common tzdata
+
+RUN add-apt-repository multiverse && \
+  dpkg --add-architecture i386 && \
+  apt update -y && apt-get upgrade -y 
+
+# Install steam and steamcmd
+# https://askubuntu.com/questions/854997/how-to-accept-steam-license-when-installing-steam
+# https://askubuntu.com/questions/506909/how-can-i-accept-the-lience-agreement-for-steam-prior-to-apt-get-install/1017487#1017487
+RUN useradd -m steam && cd /home/steam && \
+  echo steam steam/question select "I AGREE" | debconf-set-selections && \
+  echo steam steam/license note '' | debconf-set-selections && \
+  apt purge steam steamcmd && \
+  apt install -y lib32gcc-s1 gdebi-core libgl1-mesa-glx:i386 wget steam steamcmd
+
+RUN ln -s /usr/games/steamcmd /usr/bin/steamcmd
+
+RUN apt install -y wine \
+  winbind
+
+# https://superuser.com/questions/902175/run-wine-totally-headless
+RUN apt install -y xserver-xorg \
+  xvfb \
+  x11-utils
+
+RUN rm -rf /var/lib/apt/lists/* && \
+  apt clean && \
+  apt autoremove -y
+
+RUN mkdir -p /root/.steam 2>/dev/null && \
+  chmod -R 777 /root/.steam 2>/dev/null
+
+ENV DISPLAY=:99
+
+RUN winecfg
